@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Account Details</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="assets/css/customer.css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body class="bg-light">
+        <div id="navbar-placeholder"></div>
+        <div class="container mt-4 mb-5">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard" class="text-decoration-none">My Accounts</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Account Details</li>
+                </ol>
+            </nav>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                        <div id="cardHeader" class="card-header border-0 p-4 text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-uppercase opacity-75 fw-bold">Current Balance</span>
+                                <i class="bi bi-shield-check fs-4"></i>
+                            </div>
+                            <h1 class="display-5 fw-bold mt-2 mb-0" id="balance"></h1>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <label class="text-muted small d-block">Account Holder</label>
+                                <span class="fw-semibold" id="username"></span> </div>
+                            <div class="mb-3">
+                                <label class="text-muted small d-block">Account Number</label>
+                                <code class="text-dark fw-bold" id="id"></code>
+                            </div>
+                            <div class="mb-0">
+                                <label class="text-muted small d-block"></label>
+                                <span id="type">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3">Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-dark border-dashed py-2"><i class="bi bi-arrow-left-right me-2"></i> Transfer Money</button>
+                                <button class="btn btn-outline-dark border-dashed py-2"><i class="bi bi-file-earmark-pdf me-2"></i> Get Statement</button>
+                                <button class="btn btn-light text-danger py-2"><i class="bi bi-slash-circle me-2"></i> Freeze Account</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0">Transaction History</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Last 30 Days
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-0 p-4 text-center">
+                            <button class="btn btn-link text-decoration-none fw-bold small">Load More Transactions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const token = localStorage.getItem("MBtoken");
+                if (!token) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                const urlParam = new URLSearchParams(window.location.search);
+                const id = urlParam.get("id");
+                getAccountDetail(id);
+                includeNavbar();
+            }
+            );
+            function includeNavbar() {
+                fetch("navbar.html")
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("navbar-placeholder").innerHTML = data;
+                        })
+                        .catch(err => console.error("Navbar can't included!", err));
+            }
+            function getAccountDetail(id) {
+                const apiUrl = `http://localhost:8080/minibankrest/accounts/${id}`;
+                const token = localStorage.getItem("MBtoken");
+                fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    }
+                })
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (!response.ok) {
+                                throw new Error("account not found!");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const account = data.obj;
+                            const username = account.customerUsername;
+                            const balance = account.balance || 0;
+                            const type = account.accountType;
+                            const isChecking = type === "Checking";
+
+                            console.log("username: " + username);
+                            const typeElem = document.getElementById("type");
+                            typeElem.className = isChecking ? `badge bg-success-subtle text-success` : `badge bg-primary-subtle text-primary`;
+                            typeElem.innerText = type;
+
+                            document.getElementById("username").innerText = username;
+                            document.getElementById("id").innerText = id;
+                            document.getElementById("balance").innerText = balance + " ₼";
+
+                            const cardHeader = document.getElementById("cardHeader");
+                            const cardHeaderColor = isChecking ? `card-header border-0 p-4 bg-success text-white bg-success` : `card-header border-0 p-4 text-white bg-primary`;
+                            cardHeader.className = cardHeaderColor;
+                        })
+                        .catch(err => console.error("Error", err));
+            }
+        </script>
+    </body>
+</html>

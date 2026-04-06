@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Money Transfer</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="assets/css/customer.css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body class="bg-light">
+        <div id="navbar-placeholder"></div>
+
+        <div class="container mt-4">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 pt-4 ps-4">
+                            <h4 class="fw-bold text-dark mb-0">New Money Transfer</h4>
+                            <p class="text-muted small">Send money to internal or external accounts securely.</p>
+                        </div>
+                        <div class="card-body p-4">
+                            <form onsubmit="transferProcess(event)">
+                                <div class="row" id="fromAccount"></div>
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Recipient IBAN / Account Number</label>
+                                    <div class="input-group input-group-lg">
+                                        <input type="text" class="form-control border-2" placeholder="32 BANK 0000..." name="toIban" required>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Description (Optional)</label>
+                                    <textarea class="form-control border-2" rows="2" placeholder="e.g. Rent payment, Dinner" name="description"></textarea>
+                                </div>
+                                <div class="d-grid pt-2">
+                                    <button type="submit" class="btn btn-success btn-lg fw-bold shadow">Confirm Transfer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm bg-primary text-info mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-white"><i class="bi bi-shield-fill-check"></i> Secure Transfer</h5>                        
+                            <p class="small mb-0 opacity-75 text-white">Your transfers are encrypted. Pletext-ase double-check the IBAN number before confirming the transaction.</p>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 pt-3">
+                            <h6 class="fw-bold mb-0">Recent Recipients</h6>
+                        </div>
+                        <div class="card-body px-0" id="recipient"> </div>
+                        <div class="card-footer bg-white border-0 text-center pb-3">
+                            <a href="#" class="text-decoration-none small text-primary">Manage Recipients</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>  
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const token = localStorage.getItem("MBtoken");
+                if (!token) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                includeNavbar();
+                getAccounts();
+                getRecipientCustomer();
+            });
+            function includeNavbar() {
+                fetch("navbar.html")
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("navbar-placeholder").innerHTML = data;
+                        }).catch(err => console.error("Navbar can't included!", err));
+            }
+            function getRecipientCustomer() {
+                const apiUrl = "http://localhost:8080/minibankrest/money-transfer";
+                const token = localStorage.getItem("MBtoken");
+                fetch(apiUrl, {
+                    method: "GET",
+                    headers: {"Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    }})
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (!response.ok) {
+                                throw new Error("transactions can't downloaded");
+                            }
+                            return response.json();
+                        }).then(data => {
+                    const transaction = data.obj.TransactionList;
+                    const recipientDiv = document.getElementById("recipient");
+                    recipientDiv.innerHTML = "";
+                    transaction.forEach(t => {
+                        const div = document.createElement("div");
+                        div.className = "list-group list-group-flush";
+                        div.innerHTML = `<div  class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center">
+                    <div class="rounded-circle bg-light p-2 me-3 text-primary fw-bold">${t.recipientName[0]}${t.recipientSurname[0]}</div>
+                    <div>
+                                    <div class="fw-bold small">${t.recipientName} ${t.recipientSurname}</div>
+                                    </div>
+                    </div>`;
+                        recipientDiv.appendChild(div);
+                    }
+                    );
+                }).catch(err => console.error("error", err));
+            }
+
+            function transferProcess(event) {
+                event.preventDefault();
+                const token = localStorage.getItem("MBtoken");
+                const apiUrl = "http://localhost:8080/minibankrest/transfer-process";
+                const fromAccountId = document.querySelector(`select[name="fromAccountId"]`).value;
+                const amount = document.querySelector(`input[name="amount"]`).value;
+                const toIban = document.querySelector(`input[name="toIban"]`).value;
+                const description = document.querySelector(`textarea[name="description"]`).value;
+                const transferData = {
+                    fromAccountId: fromAccountId,
+                    amount: parseFloat(amount),
+                    toIban: toIban,
+                    description: description
+                };
+                fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token},
+                    body: JSON.stringify(transferData)
+                })
+                        .then(response =>
+                        {
+                            if (response.status === 401 || response.status === 403) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (response.ok) {
+                                alert("Transfer successfully completed!");
+                                window.location.href = "accounts.html";
+                            } else {
+                                alert("Error transfer process!");
+                            }
+                        }).catch(err => console.log("error", err));
+            }
+
+            function getAccounts() {
+                const apiUrl = "http://localhost:8080/minibankrest/accounts";
+                const token = localStorage.getItem("MBtoken");
+                fetch(apiUrl, {
+                    method: "GET",
+                    headers: {"Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    }})
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (!response.ok) {
+                                throw new Error("Accounts can't loaded");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const accounts = data.obj.accounts;
+                            const container = document.getElementById("fromAccount");
+                            container.innerHTML = "";
+                            let selectAccount = `
+                <div class="col-md-6 mb-4">
+                    <label class="form-label fw-semibold">From Account</label>
+                    <select class="form-select form-select-lg border-2" name="fromAccountId" id="accountSelect" required>
+                        <option value="" selected disabled>Select an account</option>
+            `;
+                            accounts.forEach(acc => {
+                                selectAccount += `<option value="${acc.id}">${acc.accountType} - ${acc.balance}` + ` ₼`;
+                            });
+                            selectAccount += `</select></div> <div class="col-md-6 mb-4">
+                                        <label class="form-label fw-semibold">Amount</label>
+                                        <div class="input-group input-group-lg">
+                                            <input type="number" step="0.01" class="form-control border-2" placeholder="0.00" name="amount" required>
+                                            <span class="input-group-text bg-light border-2">₼</span>
+                                        </div>
+                                    </div>`;
+                            container.innerHTML = selectAccount;
+                        })
+                        .catch(err => console.log("Error: " + err));
+            }
+        </script>
+    </body>
+</html>

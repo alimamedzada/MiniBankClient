@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="assets/css/login.css">
+        <title>Login Page</title>
+    </head>
+    <body>
+
+        <div class="container">
+            <div class="vh-100 d-flex justify-content-center align-items-center">
+                <div class="text-center p-5 shadow rounded bg-light">
+                    <form onsubmit="event.preventDefault(); login();">  
+                        <div class="form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required/>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-primary d-grid w-100">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>    
+        </div>
+        <script>
+            async function login() {
+                const usernameField = document.getElementById("username");
+                const passwordField = document.getElementById("password");
+
+                if (!usernameField || !passwordField) {
+                    console.error("HATA: HTML içinde 'username' veya 'password' ID'li input bulunamadı!");
+                    return;
+                }
+
+                const username = usernameField.value;
+                const password = passwordField.value;
+
+                try {
+                    const response = await fetch("http://localhost:8080/minibankrest/api/authenticate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+
+                    if (response.ok) {
+                        const token = await response.text();
+
+                        localStorage.setItem("jwt_token", token);
+
+                        alert("Giriş Başarılı! Token alındı.");
+                        console.log("Alınan Token:", token);
+
+                        window.location.href = "accounts.html";
+                    } else {
+                        const errorText = await response.text();
+                        alert("Giriş Başarısız: " + errorText);
+                    }
+                } catch (error) {
+                    console.error("Bir hata oluştu:", error);
+                    alert("Sunucuya bağlanılamadı!");
+                }
+            }
+        </script>
+    </body>
+</html>

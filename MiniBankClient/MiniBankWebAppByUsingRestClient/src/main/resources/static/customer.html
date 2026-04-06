@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Customer Dashboard</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="assets/css/customer.css">
+    </head>
+    <body class="bg-light">
+
+        <div id="navbar-placeholder"></div>
+
+        <div class="container py-4">
+            <div class="welcome-banner text-center mb-5">
+                <h1 class="display-4 fw-bold">Welcome back, <span id="customerName" class="text-primary">Loading...</span>!</h1>
+                <p class="lead">Here is an overview of your financial world.</p>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 p-3 text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-wallet2 fs-1 text-primary card-icon"></i> 
+                            <h3 class="card-title mt-2">My Accounts</h3>
+                            <p class="card-text text-muted">View balances and details of all your accounts.</p>
+                            <h2 class="fw-bold my-3 text-success" id="totalBalance">0.00 ₼</h2>
+                            <button class="btn btn-primary w-100">View Accounts</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="card h-100 p-3 text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-arrow-left-right fs-1 text-primary card-icon"></i> 
+                            <h3 class="card-title mt-2">Quick Transfer</h3>
+                            <p class="card-text text-muted">Send money to other accounts instantly.</p>
+                            <form  onsubmit="handleTransfer(event)">
+                                <div class="mb-2 text-start">
+                                    <input id= "toIban" name="toIban" type="text" class="form-control form-control-sm mb-2" placeholder="Recipient Account No" required>
+                                    <input id= "amount" name="amount" type="number" step="0.01" class="form-control form-control-sm" placeholder="Amount (₼)" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 mt-2">Go to Transfer</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="card h-100 p-3 text-center shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-clock-history fs-1 text-secondary card-icon"></i> 
+                            <h3 class="card-title mt-2">History</h3>
+                            <p class="card-text text-muted">Check your recent transactions and activity.</p>
+                            <ul class="list-group list-group-flush text-start small mb-3" id="transactionList">
+                                <li class="list-group-item text-center text-muted border-0">Loading transactions...</li>
+                            </ul>
+                            <a href="transaction-history.html" class="btn btn-secondary w-100">View All History</a>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+        </div>
+
+        <script>
+
+            function handleTransfer(event) {
+                event.preventDefault();
+
+                const iban = document.getElementById("toIban").value;
+                const amount = document.getElementById("amount").value;
+                const apiUrl = "http://localhost:8080/minibankrest/quick-transfer-process";
+                const token = localStorage.getItem("MBtoken");
+                const transferData = {
+                    toIban: iban,
+                    amount: parseFloat(amount)
+                };
+                fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(transferData)
+                })
+                        .then(response => {
+                            if (response.ok) {
+                                alert("Para başarıyla gönderildi!");
+                                location.reload();
+                            } else {
+                                alert("Transfer sırasında bir hata oluştu!");
+                            }
+                        }).catch(err => console.log("error", err));
+            }
+            document.addEventListener("DOMContentLoaded", function () {
+                const token = localStorage.getItem("MBtoken");
+                if (!token) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                includeNavbar();
+                fetchCustomerData();
+            }
+            );
+            function includeNavbar() {
+                fetch("navbar.html")
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("navbar-placeholder").innerHTML = data;
+                        })
+                        .catch(err => console.error("Navbar can't included!", err));
+            }
+
+            function fetchCustomerData() {
+                const token = localStorage.getItem("MBtoken");
+                const apiUrl = "http://localhost:8080/minibankrest/customer";
+                fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    }
+                })
+                        .then(response => {
+                            if (response.status === 403 || response.status === 401) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (!response.ok)
+                                throw new Error("Network response was not ok");
+                            return response.json();
+                        })
+
+                        .then(data => {
+                            const customerData = data.obj;
+                            document.getElementById("customerName").innerText = customerData.customer.name;
+                            document.getElementById("totalBalance").innerText = customerData.totalBalance;
+                            renderTransactions(customerData.transactions);
+                        }).catch(error => {
+                    console.error("Veri çekilirken hata oluştu:", error);
+                    document.getElementById('customerName').innerText = "Error!";
+                });
+            }
+
+            function renderTransactions(transactions) {
+                const listContainer = document.getElementById('transactionList');
+                listContainer.innerHTML = '';
+                if (!transactions || transactions.length === 0) {
+                    listContainer.innerHTML = '<li class="list-group-item text-center border-0">No recent transactions.</li>';
+                    return;
+                }
+
+                transactions.forEach(t => {
+                    const isOutgoing = t.transactionType === 'OUTGOING';
+                    const iconBgClass = isOutgoing ? 'bg-light-danger' : 'bg-light-success';
+                    const iconClass = isOutgoing ? 'bi-arrow-up-right text-danger' : 'bi-arrow-down-left text-success';
+                    const amountColorClass = isOutgoing ? 'text-danger' : 'text-success';
+                    const sign = isOutgoing ? '-' : '+';
+                    const dateStr = t.transactionDate ? t.transactionDate : '';
+                    const li = document.createElement('li');
+                    li.className = "list-group-item d-flex justify-content-between align-items-center py-2 border-0 border-bottom";
+                    li.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="icon-box me-2 ${iconBgClass}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                <i class="bi ${iconClass}"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size: 0.85rem;">${t.description}</div>
+                                <small class="text-muted" style="font-size: 0.7rem;">${dateStr}</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold ${amountColorClass}" style="font-size: 0.9rem;">
+                                ${sign}${t.amount} ₼
+                            </span>
+                            <br>
+                            <small class="text-uppercase text-muted" style="font-size: 0.6rem; letter-spacing: 0.5px;">
+                                ${t.transactionType}
+                            </small>
+                        </div>
+                    `;
+                    listContainer.appendChild(li);
+                });
+            }
+        </script>
+    </body>
+</html>

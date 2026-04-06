@@ -1,0 +1,31 @@
+body {
+    background-color: #f0f2f5;
+}
+
+.welcome-banner {
+    background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card {
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: #0093E9;
+    display: block;
+    margin-bottom: 15px;
+}

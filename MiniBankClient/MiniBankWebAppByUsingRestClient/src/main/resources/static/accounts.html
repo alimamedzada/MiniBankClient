@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Accounts</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" type="text/css" href="assets/css/customer.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body class="bg-light">
+        <div id="navbar-placeholder"></div>
+        <div class="container mt-4">
+            <div class="row align-items-center mb-5">
+                <div class="col-lg-8">
+                    <h2 class="fw-bold text-dark mb-1">My Accounts</h2>
+                    <p class="text-muted">Welcome back! Here is an overview of your finances.</p>
+                    <a href="open-new-account.html" 
+                       class="btn btn-success btn-sm shadow-sm rounded-pill px-3">
+                        + Open New Account
+                    </a>
+                </div>
+                <div class="col-lg-4 mt-3 mt-lg-0">
+                    <div class="card bg-primary text-white border-0 shadow-lg rounded-4 overflow-hidden">
+                        <div class="card-body p-4 position-relative">
+                            <p class="mb-1 small opacity-75 text-uppercase fw-bold">Total Net Worth</p>
+                            <h2 class="fw-bold mb-0" id="totalBalance"></h2>
+                            <div class="mt-2">
+                                <span class="badge bg-white bg-opacity-25 rounded-pill small">
+                                    <span class="spinner-grow spinner-grow-sm me-1" role="status"></span>
+                                    Live Balance
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="mb-5 opacity-10">
+
+            <div class="row g-4" id="accountsContainer"></div>
+
+            <div class="mt-5 mb-5">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-3">
+                        <h5 class="fw-bold">Recent Activity</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light text-muted">
+                                    <tr>
+                                        <th class="ps-4">Date</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th class="text-end pe-4">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 text-muted">Mar 12, 2026</td>
+                                        <td class="fw-semibold">Grocery Store - Bravo</td>
+                                        <td><span class="badge bg-warning-subtle text-warning">Shopping</span></td>
+                                        <td class="text-end pe-4 text-danger fw-bold">- 45.20 ?</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const token = localStorage.getItem("MBtoken");
+                if (!token) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                includeNavbar();
+                accounts();
+            }
+            );
+            function includeNavbar() {
+                fetch("navbar.html")
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("navbar-placeholder").innerHTML = data;
+                        })
+                        .catch(err => console.error("Navbar can't included!", err));
+            }
+
+            function accounts() {
+                const token = localStorage.getItem("MBtoken");
+                const apiUrl = "http://localhost:8080/minibankrest/accounts";
+                fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    }
+                })
+                        .then(response => {
+                            if (response.status === 403 || response.status === 401) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const totalBalance = data.obj.totalBalance;
+                            document.getElementById("totalBalance").innerText = totalBalance + " ₼";
+                            const accountList = data.obj.accounts;
+                            const container = document.getElementById("accountsContainer");
+                            container.innerHTML = "";
+                            accountList.forEach(acc => {
+                                const isChecking = acc.accountType.toUpperCase() === "CHECKING";
+                                const typeColor = isChecking ? `bg-success` : `bg-primary`;
+                                const colCard = document.createElement("div");
+                                colCard.className = "col-md-4";
+                                colCard.innerHTML =
+                                        `<div class="card border-0 shadow-sm h-100 border-start border-4">
+                            <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                            <h6 class="text-muted ">
+                                ${acc.accountType}
+                                    </h6>
+                                    <span class="bg-primary-subtle text-primary rounded-pill">Active</span>
+                                </div>
+                            <h3 class="mt-2 mb-3 fw-bold">${acc.balance}</h3>
+                <p class="card-text text-muted small ">Account No: ${acc.id}</p>
+            
+            <div class="d-grid mt-3 rounded-pill  ${typeColor}">
+                <a href="account-detail.html?id=${acc.id}" class="btn btn-sm text-white">Details</a>
+                    </div>
+                    </div>
+                            </div>`;
+                                container.appendChild(colCard);
+                            });
+                        })
+                        .catch(err => console.log("Error: " + err));
+            }
+        </script>
+    </body>
+</html>

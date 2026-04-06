@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Open New Account</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-light">
+        <div id="navbar-placeholder"></div>
+
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <a href="accounts.html" class="btn btn-link text-decoration-none text-muted mb-3">
+                        <i class="bi bi-arrow-left"></i> Back to History
+                    </a>
+
+                    <div class="card border-0 shadow-lg rounded-4">
+                        <div class="card-header card-header-gradient p-4 rounded-top-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-white bg-opacity-25 p-3 me-3">
+                                    <i class="bi bi-wallet2 fs-3 text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 class="fw-bold mb-0">Open New Account</h3>
+                                    <p class="mb-0 small text-white-50">Choose your currency and start banking.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form  onsubmit="createAccount(event)" >
+                                <div class="mb-4 g-2 text-center">
+                                    <label class="form-label fw-bold text-secondary">Account Currency</label>
+                                    <div class="row g-2 justify-content-center">
+
+                                        <div class="row g-2 justify-content-center">
+                                            <div class="col-4">
+                                                <input type="radio" class="btn-check" name="account" id="CHECKING" value="CHECKING">
+                                                <label class="btn btn-outline-success w-100 py-3" for="CHECKING">
+                                                    <span class="d-block fw-bold">Checking</span>
+                                                    <small>Standard</small>
+                                                </label>
+                                            </div>
+
+                                            <div class="col-4">
+                                                <input type="radio" class="btn-check" name="account" id="SAVINGS" value="SAVINGS">
+                                                <label class="btn btn-outline-primary w-100 py-3" for="SAVINGS">
+                                                    <span class="d-block fw-bold">Savings</span>
+                                                    <small>Growth</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="initialBalance" class="form-label fw-bold text-secondary">Initial Balance (Optional)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-2"><i class="bi bi-cash"></i></span>
+                                        <input type="number" step="0.01" class="form-control border-2" id="initialBalance" name="balance" placeholder="0.00" min="0">
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        Funds will be automatically allocated to your new account.
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning btn-lg fw-bold rounded-pill shadow-sm py-3">
+                                        Confirm & Create Account
+                                    </button>
+                                    <p class="text-center text-muted small mt-3">
+                                        By clicking confirm, you agree to our <a href="#" class="text-success text-decoration-none">Terms of Service</a>.
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const token = localStorage.getItem("MBtoken");
+                if (!token) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                includeNavbar();
+            });
+            function includeNavbar() {
+                fetch("navbar.html")
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("navbar-placeholder").innerHTML = data;
+                        }).catch(err => console.error("Navbar can't included!", err));
+            }
+            function createAccount(event) {
+                event.preventDefault();
+                const apiUrl = "http://localhost:8080/minibankrest/create-new-account";
+                const selectedAccount = document.querySelector('input[name="account"]:checked')?.value;
+                const initialBalance = document.getElementById("initialBalance");
+                const balanceToSend = initialBalance.value === "" ? 0 : Number(initialBalance.value);
+                const transferData = {
+                    accountType: selectedAccount,
+                    balance: balanceToSend
+                };
+                fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify(transferData)}
+                )
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                localStorage.removeItem("MBtoken");
+                                window.location.href = "login.html";
+                                return;
+                            }
+                            if (response.ok) {
+                                alert("New account successfully created!");
+                                window.location.href = "accounts.html";
+                            } else {
+                                alert("Error creating account!");
+                            }
+                        }).catch(err => console.log("error", err));
+            }
+
+        </script>
+    </body>
+</html>
