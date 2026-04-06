@@ -4,6 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="assets/css/login.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <link rel="icon" type="image/x-icon" href="favicon.ico">
         <title>Login Page</title>
     </head>
@@ -22,6 +23,19 @@
                             <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" autocomplete="current-password" required>                        </div>
                         <div class="mt-2">
                             <button type="submit" class="btn btn-primary d-grid w-100">Login</button>
+                        </div>
+                        <div class="position-relative my-4">
+                            <hr>
+                            <span class="position-absolute top-50 start-50 translate-middle bg-light px-2 text-muted" style="font-size: 0.8rem;">OR</span>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-danger rounded-circle btn-social" onclick="loginWithGoogle()">
+                                <i class="fab fa-google"></i>
+                            </button>
+                            <button type="button" class="btn btn-primary rounded-circle btn-social" onclick="loginWithFacebook()">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -47,7 +61,6 @@
                     if (response.ok) {
                         const token = data.obj;
 
-
                         localStorage.setItem("MBtoken", token);
 
                         window.location.href = "customer.html";
@@ -59,6 +72,9 @@
                     console.error("Error at request: ", err);
                     alert("Unreachable server!");
                 }
+            }
+            function loginWithGoogle() {
+                window.location.href = "http://localhost:8080/minibankrest/oauth2/authorization/google";
             }
         </script>
     </body>
