@@ -16,7 +16,7 @@
                     <form onsubmit="event.preventDefault(); login();">  
                         <div class="form-group">
                             <label class="form-label" for="username">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required/>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" autocomplete="current-password" required/>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="password">Password</label>
@@ -32,9 +32,6 @@
                         <div class="d-flex justify-content-center gap-3">
                             <button type="button" class="btn btn-danger rounded-circle btn-social" onclick="loginWithGoogle()">
                                 <i class="fab fa-google"></i>
-                            </button>
-                            <button type="button" class="btn btn-primary rounded-circle btn-social" onclick="loginWithFacebook()">
-                                <i class="fab fa-facebook-f"></i>
                             </button>
                         </div>
                     </form>

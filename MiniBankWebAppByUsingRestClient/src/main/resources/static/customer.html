@@ -66,7 +66,8 @@
         </div>
 
         <script>
-            window.onload = function () {
+            document.addEventListener("DOMContentLoaded", function () {
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const tokenFromUrl = urlParams.get("token");
 
@@ -74,15 +75,19 @@
                     localStorage.setItem("MBtoken", tokenFromUrl);
 
                     window.history.replaceState({}, document.title, window.location.pathname);
-
-                    console.log("Token URL'den yakalandı ve kaydedildi.");
                 }
 
-                const finalToken = localStorage.getItem("MBtoken");
-                if (!finalToken) {
+                const token = localStorage.getItem("MBtoken");
+
+                if (!token) {
                     window.location.href = "login.html";
+                    return;
                 }
-            };
+
+                includeNavbar();
+                fetchCustomerData();
+            });
+
             function handleTransfer(event) {
                 event.preventDefault();
 
@@ -104,23 +109,14 @@
                 })
                         .then(response => {
                             if (response.ok) {
-                                alert("Para başarıyla gönderildi!");
+                                alert("Money successfully sent!");
                                 location.reload();
                             } else {
-                                alert("Transfer sırasında bir hata oluştu!");
+                                alert("Transfer processing error!");
                             }
                         }).catch(err => console.log("error", err));
             }
-            document.addEventListener("DOMContentLoaded", function () {
-                const token = localStorage.getItem("MBtoken");
-                if (!token) {
-                    window.location.href = "login.html";
-                    return;
-                }
-                includeNavbar();
-                fetchCustomerData();
-            }
-            );
+
             function includeNavbar() {
                 fetch("navbar.html")
                         .then(response => response.text())

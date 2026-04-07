@@ -104,6 +104,7 @@
                 const selectedAccount = document.querySelector('input[name="account"]:checked')?.value;
                 const initialBalance = document.getElementById("initialBalance");
                 const balanceToSend = initialBalance.value === "" ? 0 : Number(initialBalance.value);
+                const token = localStorage.getItem("MBtoken");
                 const transferData = {
                     accountType: selectedAccount,
                     balance: balanceToSend
