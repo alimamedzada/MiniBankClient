@@ -80,7 +80,7 @@
                 const token = localStorage.getItem("MBtoken");
 
                 if (!token) {
-                    window.location.href = "login.html";
+                    window.location.href = "index.html";
                     return;
                 }
 
@@ -139,7 +139,7 @@
                         .then(response => {
                             if (response.status === 403 || response.status === 401) {
                                 localStorage.removeItem("MBtoken");
-                                window.location.href = "login.html";
+                                window.location.href = "index.html";
                                 return;
                             }
                             if (!response.ok)

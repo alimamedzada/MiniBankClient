@@ -6,6 +6,7 @@
         <title>Account Details</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <link rel="icon" type="image/x-icon" href="favicon.ico">
         <link rel="stylesheet" type="text/css" href="assets/css/customer.css">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -50,8 +51,10 @@
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-3">Quick Actions</h6>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-outline-dark border-dashed py-2"><i class="bi bi-arrow-left-right me-2"></i> Transfer Money</button>
-                                <button class="btn btn-outline-dark border-dashed py-2"><i class="bi bi-file-earmark-pdf me-2"></i> Get Statement</button>
+                                <button class="btn btn-outline-dark border-dashed py-2"
+                                        data-bs-toggle="modal" data-bs-target="#transferModal">
+                                    <i class="bi bi-arrow-left-right me-2"></i> Transfer Money
+                                </button>                                <button class="btn btn-outline-dark border-dashed py-2"><i class="bi bi-file-earmark-pdf me-2"></i> Get Statement</button>
                                 <button class="btn btn-light text-danger py-2"><i class="bi bi-slash-circle me-2"></i> Freeze Account</button>
                             </div>
                         </div>
@@ -76,19 +79,73 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="transferModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4 border-0 shadow">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-arrow-left-right me-2 text-primary"></i>Quick Transfer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body px-4 pb-4">
+                        <p class="text-muted small mb-3">Send money to other accounts instantly.</p>
+                        <form onsubmit="handleTransfer(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Recipient Account No</label>
+                                <input id="toIban" name="toIban" type="text"
+                                       class="form-control" placeholder="e.g. 123456" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small fw-semibold">Amount (₼)</label>
+                                <input id="amount" name="amount" type="number" step="0.01"
+                                       class="form-control" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-send me-2"></i>Send Money
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const token = localStorage.getItem("MBtoken");
                 if (!token) {
-                    window.location.href = "login.html";
+                    window.location.href = "index.html";
                     return;
                 }
                 const urlParam = new URLSearchParams(window.location.search);
                 const id = urlParam.get("id");
                 getAccountDetail(id);
                 includeNavbar();
+            }   );
+            function handleTransfer(event) {
+                event.preventDefault();
+                const toIban = document.getElementById("toIban").value;
+                const amount = document.getElementById("amount").value;
+                const token = localStorage.getItem("MBtoken");
+
+                fetch("http://localhost:8080/minibankrest/quick-transfer-process", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({ toIban, amount })
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        bootstrap.Modal.getInstance(
+                            document.getElementById("transferModal")
+                        ).hide();
+                        alert("Transfer uğurlu oldu!");
+                        location.reload();
+                    })
+                    .catch(err => alert("Xəta baş verdi: " + err));
             }
-            );
+
             function includeNavbar() {
                 fetch("navbar.html")
                         .then(response => response.text())

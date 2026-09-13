@@ -6,7 +6,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-public class MiniBankClientApplication extends SpringBootServletInitializer {
+public class  MiniBankClientApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplication.run(MiniBankClientApplication.class, args);

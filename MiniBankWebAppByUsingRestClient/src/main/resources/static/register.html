@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="assets/css/login.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
         <title>Register Page</title>
     </head>
-    <!--    <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger">
-                ${errorMessage}
-            </div>
-        </c:if>-->
     <body>
         <div class="container vh-100 d-flex justify-content-center align-items-center">
             <div class="col-md-4 p-5 shadow rounded-3 p-3 bg-light">
-                <form action="${pageContext.request.contextPath}/register"  method="POST">
+                <form id="registerForm">
                     <div class="form-group">
                         <label class="form-label" for="name">Name</label>
                         <input type="text" class="form-control" placeholder="Enter name" name="name"/>
@@ -34,18 +31,18 @@
                     <div class="form-group">
                         <label class="form-label" for="accountType">Account Type</label>
                         <select class="form-select" name="accountType">
-                            <option value="checking">Checking</option>  
-                            <option value="savings">Savings</option>
+                            <option name="account" value="CHECKING">Checking</option>  
+                            <option name="account" value="SAVINGS">Savings</option>
                         </select>
                     </div>
                     <hr/>
                     <div class="form-group">
                         <label class="form-label" for="username">Username</label>
-                        <input type="text" class="form-control" placeholder="Enter username" name="username" />
+                        <input type="text" class="form-control" placeholder="Enter username" name="username"  autocomplete="current-password"/>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
-                        <input type="password" class="form-control" placeholder="Enter password" name="password" />
+                        <input type="password" class="form-control" placeholder="Enter password" name="password" autocomplete="current-password" />
                     </div>
                     <div class="mt-2">
                         <button type="submit" class="d-grid btn btn-primary">Register</button>
@@ -53,5 +50,34 @@
                 </form>
             </div>
         </div>
+        <script>
+            document.getElementById("registerForm").addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData.entries());
+
+                console.log("Data: ", data);
+
+                fetch("http://localhost:8080/minibankrest/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                })
+                        .then(response => response.json())
+                        .then(resDto => {
+                            console.log(resDto);
+                            if (resDto) {
+                                alert(resDto.successMessage);
+                                window.location.href = "login.html";
+                            } else {
+                                alert("Error= " + resDto.errorMessage);
+                            }
+                        })
+                        .catch(error => console.error("Error: ", error));
+            });
+        </script>
     </body>
 </html>

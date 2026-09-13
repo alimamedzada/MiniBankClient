@@ -86,7 +86,7 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const token = localStorage.getItem("MBtoken");
                 if (!token) {
-                    window.location.href = "login.html";
+                    window.location.href = "index.html";
                     return;
                 }
                 includeNavbar();
@@ -120,7 +120,7 @@
                         .then(response => {
                             if (response.status === 401 || response.status === 403) {
                                 localStorage.removeItem("MBtoken");
-                                window.location.href = "login.html";
+                                window.location.href = "index.html";
                                 return;
                             }
                             if (response.ok) {
